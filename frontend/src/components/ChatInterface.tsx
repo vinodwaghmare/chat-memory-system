@@ -4,6 +4,25 @@ import { useState, useRef, useEffect } from "react";
 import { sendMessage } from "@/lib/api";
 import type { ConversationResponse } from "@/lib/types";
 
+const STORAGE_KEY = "chat-memory-messages";
+const CONV_ID_KEY = "chat-memory-conv-id";
+
+function loadMessages(): Message[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveMessages(msgs: Message[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(msgs));
+  } catch {}
+}
+
 interface Message {
   role: "user" | "assistant";
   content: string;
@@ -12,11 +31,22 @@ interface Message {
 }
 
 export default function ChatInterface() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(loadMessages);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [conversationId, setConversationId] = useState("");
+  const [conversationId, setConversationId] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem(CONV_ID_KEY) || "";
+  });
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    saveMessages(messages);
+  }, [messages]);
+
+  useEffect(() => {
+    if (conversationId) localStorage.setItem(CONV_ID_KEY, conversationId);
+  }, [conversationId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -96,6 +126,14 @@ export default function ChatInterface() {
       </div>
 
       <div className="border-t border-gray-800 pt-4">
+        {messages.length > 0 && (
+          <button
+            onClick={() => { setMessages([]); setConversationId(""); localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(CONV_ID_KEY); }}
+            className="mb-2 px-3 py-1 text-xs text-gray-400 hover:text-white border border-gray-700 rounded-md"
+          >
+            Clear Chat
+          </button>
+        )}
         <div className="flex gap-2">
           <input
             type="text"
