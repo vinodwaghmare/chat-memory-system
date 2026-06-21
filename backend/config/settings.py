@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     # -------------------------------------------------------------------------
     openai_api_key: str = ""
     openai_base_url: str = ""
+    openrouter_api_key: str = ""
+    openrouter_fallback_model: str = "cohere/north-mini-code:free"
     anthropic_api_key: str = ""
     openai_embedding_model: str = "text-embedding-3-small"
     openai_embedding_dimensions: int = 1536

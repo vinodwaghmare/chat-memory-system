@@ -81,12 +81,61 @@ class ConcreteLLMClient(LLMClient):
                 return result
             except Exception as exc:
                 last_error = exc
+                is_quota = "insufficient_quota" in str(exc) or "429" in str(exc)
+                if is_quota and cfg.openrouter_api_key:
+                    logger.warning("OpenAI quota exceeded, falling back to OpenRouter")
+                    return await self._openrouter_fallback(
+                        cfg, messages, system_prompt, temperature, max_tokens,
+                    )
                 if attempt < 2:
                     wait = 2 ** attempt
                     logger.warning("LLM call failed (attempt %d), retrying in %ds: %s", attempt + 1, wait, exc)
                     await asyncio.sleep(wait)
 
         raise LLMClientError(provider, str(last_error))
+
+    async def _openrouter_fallback(
+        self,
+        cfg: Any,
+        messages: list[dict[str, str]],
+        system_prompt: str,
+        temperature: float,
+        max_tokens: int,
+    ) -> LLMResponse:
+        from openai import AsyncOpenAI
+
+        client = AsyncOpenAI(
+            api_key=cfg.openrouter_api_key,
+            base_url="https://openrouter.ai/api/v1",
+        )
+        full_messages = []
+        if system_prompt:
+            full_messages.append({"role": "system", "content": system_prompt})
+        full_messages.extend(messages)
+
+        start = time.monotonic()
+        resp = await client.chat.completions.create(
+            model=cfg.openrouter_fallback_model,
+            messages=full_messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        elapsed_ms = (time.monotonic() - start) * 1000
+        choice = resp.choices[0]
+        content = choice.message.content or ""
+        input_tokens = resp.usage.prompt_tokens if resp.usage else 0
+        output_tokens = resp.usage.completion_tokens if resp.usage else 0
+        parsed = try_parse_json(content)
+
+        logger.info("OpenRouter fallback succeeded (model=%s)", cfg.openrouter_fallback_model)
+        return LLMResponse(
+            content=parsed if parsed is not None else content,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            model_used=cfg.openrouter_fallback_model,
+            estimated_cost_usd=0.0,
+            latency_ms=round(elapsed_ms, 1),
+        )
 
     async def embed(
         self,
