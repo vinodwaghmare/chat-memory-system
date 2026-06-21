@@ -90,15 +90,15 @@ export default function ChatInterface() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] max-w-3xl mx-auto">
-      {/* ── Messages Area ────────────────────────────── */}
+      {/* Messages Area */}
       <div className="flex-1 overflow-y-auto space-y-4 pb-4 pr-2">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <span className="text-5xl mb-4 opacity-40">🧠</span>
-            <p className="text-gray-500 text-sm">
+            <span className="text-5xl mb-4">🧠</span>
+            <p className="text-[#666] text-sm">
               Send a message to start a conversation with memory.
             </p>
-            <p className="text-gray-600 text-xs mt-1">
+            <p className="text-[#666] text-xs mt-1">
               Your chat history persists across sessions
             </p>
           </div>
@@ -107,13 +107,13 @@ export default function ChatInterface() {
         {messages.map((msg, i) => (
           <div
             key={i}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-fade-in`}
+            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
               className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                 msg.role === "user"
-                  ? "bg-gradient-to-br from-blue-600 to-purple-600 text-white shadow-[0_2px_15px_rgba(59,130,246,0.2)]"
-                  : "glass border-white/[0.06] text-gray-200"
+                  ? "bg-blue-600 text-white"
+                  : "bg-[#262626] border border-[#333] text-[#e5e5e5]"
               }`}
             >
               <p className="text-sm whitespace-pre-wrap leading-relaxed">
@@ -122,8 +122,8 @@ export default function ChatInterface() {
               {msg.role === "assistant" &&
                 msg.memoriesUsed &&
                 msg.memoriesUsed.length > 0 && (
-                  <div className="mt-2.5 pt-2 border-t border-white/[0.06]">
-                    <span className="inline-flex items-center gap-1.5 text-[11px] text-gray-400 bg-white/[0.04] px-2.5 py-1 rounded-full">
+                  <div className="mt-2.5 pt-2 border-t border-[#404040]">
+                    <span className="inline-flex items-center gap-1.5 text-[11px] text-[#a3a3a3] bg-[#2a2a2a] px-2.5 py-1 rounded-full">
                       <span className="text-xs">🧠</span>
                       Memories used: {msg.memoriesUsed.length} | Stored:{" "}
                       {msg.memoriesStored ?? 0}
@@ -134,23 +134,14 @@ export default function ChatInterface() {
           </div>
         ))}
 
-        {/* ── Typing indicator ───────────────────────── */}
+        {/* Typing indicator */}
         {loading && (
-          <div className="flex justify-start animate-fade-in">
-            <div className="glass rounded-2xl px-5 py-3 border-white/[0.06]">
+          <div className="flex justify-start">
+            <div className="bg-[#262626] border border-[#333] rounded-2xl px-5 py-3">
               <div className="flex items-center gap-1.5">
-                <span
-                  className="w-2 h-2 rounded-full bg-blue-400/60 animate-dot-bounce"
-                  style={{ animationDelay: "0s" }}
-                />
-                <span
-                  className="w-2 h-2 rounded-full bg-purple-400/60 animate-dot-bounce"
-                  style={{ animationDelay: "0.16s" }}
-                />
-                <span
-                  className="w-2 h-2 rounded-full bg-blue-400/60 animate-dot-bounce"
-                  style={{ animationDelay: "0.32s" }}
-                />
+                <span className="w-2 h-2 rounded-full bg-[#a3a3a3] animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-[#a3a3a3] animate-pulse" style={{ animationDelay: "0.2s" }} />
+                <span className="w-2 h-2 rounded-full bg-[#a3a3a3] animate-pulse" style={{ animationDelay: "0.4s" }} />
               </div>
             </div>
           </div>
@@ -158,8 +149,8 @@ export default function ChatInterface() {
         <div ref={bottomRef} />
       </div>
 
-      {/* ── Input Area ───────────────────────────────── */}
-      <div className="pt-4 border-t border-white/[0.04]">
+      {/* Input Area */}
+      <div className="pt-4 border-t border-[#333]">
         {/* Clear chat */}
         {messages.length > 0 && (
           <button
@@ -169,7 +160,7 @@ export default function ChatInterface() {
               localStorage.removeItem(STORAGE_KEY);
               localStorage.removeItem(CONV_ID_KEY);
             }}
-            className="mb-3 px-3 py-1 text-[11px] text-gray-500 hover:text-gray-300 glass rounded-lg hover:bg-white/[0.04] transition-all duration-200"
+            className="mb-3 px-3 py-1 text-[11px] text-[#666] hover:text-[#999] transition-colors"
           >
             Clear Chat
           </button>
@@ -183,14 +174,14 @@ export default function ChatInterface() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
               placeholder="Send a message..."
-              className="w-full glass-input rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/40 focus:shadow-[0_0_20px_rgba(59,130,246,0.1)] transition-all duration-300"
+              className="w-full bg-[#2a2a2a] border border-[#404040] rounded-xl px-4 py-3 text-sm text-white placeholder-[#666] focus:outline-none focus:border-blue-500 transition-colors"
               disabled={loading}
             />
           </div>
           <button
             onClick={handleSend}
             disabled={loading || !input.trim()}
-            className="px-5 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-medium rounded-xl hover:from-blue-500 hover:to-purple-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-[0_0_25px_rgba(59,130,246,0.3)]"
+            className="px-5 py-3 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
             Send
           </button>

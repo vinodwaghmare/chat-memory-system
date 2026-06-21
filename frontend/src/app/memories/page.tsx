@@ -29,28 +29,28 @@ export default function MemoriesPage() {
   }, [filter]);
 
   return (
-    <div className="max-w-5xl animate-fade-in">
-      {/* ── Header ───────────────────────────────────── */}
+    <div className="max-w-5xl">
+      {/* Header */}
       <div className="flex items-end justify-between mb-8">
         <div>
-          <h2 className="text-2xl font-bold">
-            <span className="gradient-text">Memories</span>
+          <h2 className="text-2xl font-bold text-white">
+            Memories
           </h2>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-[#a3a3a3] mt-1">
             {memories.length} memor{memories.length === 1 ? "y" : "ies"} stored
           </p>
         </div>
 
-        {/* ── Filter Tabs ────────────────────────────── */}
+        {/* Filter Tabs */}
         <div className="flex gap-1.5">
           {TYPES.map((t) => (
             <button
               key={t}
               onClick={() => setFilter(t)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all duration-300 ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                 filter === t
-                  ? "bg-gradient-to-r from-blue-600/80 to-purple-600/80 text-white shadow-[0_0_15px_rgba(59,130,246,0.2)]"
-                  : "glass text-gray-400 hover:text-white hover:bg-white/[0.04]"
+                  ? "bg-blue-600 text-white"
+                  : "bg-[#2a2a2a] border border-[#404040] text-[#a3a3a3] hover:text-white hover:bg-[#333]"
               }`}
             >
               <span className="text-[11px]">{TYPE_ICONS[t]}</span>
@@ -60,29 +60,16 @@ export default function MemoriesPage() {
         </div>
       </div>
 
-      {/* ── Content ──────────────────────────────────── */}
+      {/* Content */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <div className="flex items-center gap-3 text-gray-500">
-            <span className="w-2 h-2 rounded-full bg-blue-400 animate-dot-bounce" />
-            <span
-              className="w-2 h-2 rounded-full bg-purple-400 animate-dot-bounce"
-              style={{ animationDelay: "0.16s" }}
-            />
-            <span
-              className="w-2 h-2 rounded-full bg-blue-400 animate-dot-bounce"
-              style={{ animationDelay: "0.32s" }}
-            />
-            <span className="text-sm ml-2">Loading memories...</span>
-          </div>
+          <p className="text-[#a3a3a3] text-sm">Loading...</p>
         </div>
       ) : memories.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <span className="text-5xl mb-4 opacity-30">🧠</span>
-          <p className="text-sm">
-            <span className="gradient-text font-medium">No memories found</span>
-          </p>
-          <p className="text-xs text-gray-500 mt-1">
+          <span className="text-5xl mb-4">🧠</span>
+          <p className="text-sm text-[#a3a3a3] font-medium">No memories found</p>
+          <p className="text-xs text-[#666] mt-1">
             Start a conversation to build memory
           </p>
         </div>
