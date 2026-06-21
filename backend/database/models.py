@@ -9,6 +9,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import JSON, Boolean, DateTime, Float, Index, Integer, String, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -30,6 +31,7 @@ class MemoryORM(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False, index=True)
     type: Mapped[str] = mapped_column(String(20), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    embedding = mapped_column(Vector(1536), nullable=True)
     importance: Mapped[int] = mapped_column(Integer, default=5)
     confidence: Mapped[float] = mapped_column(Float, default=0.8)
     source: Mapped[dict] = mapped_column(JSON, default=dict)

@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 from collections.abc import AsyncGenerator
 
+import sqlalchemy
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -68,8 +69,10 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 async def init_db(engine: AsyncEngine | None = None) -> None:
     eng = engine or get_engine()
     async with eng.begin() as conn:
+        await conn.execute(sqlalchemy.text("CREATE EXTENSION IF NOT EXISTS vector"))
+        await conn.execute(sqlalchemy.text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
         await conn.run_sync(Base.metadata.create_all)
-    logger.info("Database tables verified/created.")
+    logger.info("Database tables verified/created (pgvector + pg_trgm enabled).")
 
 
 def reset_engine() -> None:
