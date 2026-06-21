@@ -7,6 +7,13 @@ import MemoryCard from "@/components/MemoryCard";
 
 const TYPES = ["all", "semantic", "procedural", "episodic"] as const;
 
+const TYPE_ICONS: Record<string, string> = {
+  all: "🎯",
+  semantic: "🔵",
+  procedural: "🟣",
+  episodic: "🟡",
+};
+
 export default function MemoriesPage() {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [filter, setFilter] = useState<string>("all");
@@ -22,34 +29,65 @@ export default function MemoriesPage() {
   }, [filter]);
 
   return (
-    <div className="max-w-4xl">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">Memories</h2>
-        <div className="flex gap-1">
+    <div className="max-w-5xl animate-fade-in">
+      {/* ── Header ───────────────────────────────────── */}
+      <div className="flex items-end justify-between mb-8">
+        <div>
+          <h2 className="text-2xl font-bold">
+            <span className="gradient-text">Memories</span>
+          </h2>
+          <p className="text-xs text-gray-500 mt-1">
+            {memories.length} memor{memories.length === 1 ? "y" : "ies"} stored
+          </p>
+        </div>
+
+        {/* ── Filter Tabs ────────────────────────────── */}
+        <div className="flex gap-1.5">
           {TYPES.map((t) => (
             <button
               key={t}
               onClick={() => setFilter(t)}
-              className={`px-3 py-1 text-xs rounded-md border ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all duration-300 ${
                 filter === t
-                  ? "bg-blue-600 border-blue-500 text-white"
-                  : "bg-gray-900 border-gray-700 text-gray-400 hover:text-white"
+                  ? "bg-gradient-to-r from-blue-600/80 to-purple-600/80 text-white shadow-[0_0_15px_rgba(59,130,246,0.2)]"
+                  : "glass text-gray-400 hover:text-white hover:bg-white/[0.04]"
               }`}
             >
-              {t}
+              <span className="text-[11px]">{TYPE_ICONS[t]}</span>
+              <span className="capitalize">{t}</span>
             </button>
           ))}
         </div>
       </div>
 
+      {/* ── Content ──────────────────────────────────── */}
       {loading ? (
-        <p className="text-gray-500 text-sm">Loading...</p>
+        <div className="flex items-center justify-center py-20">
+          <div className="flex items-center gap-3 text-gray-500">
+            <span className="w-2 h-2 rounded-full bg-blue-400 animate-dot-bounce" />
+            <span
+              className="w-2 h-2 rounded-full bg-purple-400 animate-dot-bounce"
+              style={{ animationDelay: "0.16s" }}
+            />
+            <span
+              className="w-2 h-2 rounded-full bg-blue-400 animate-dot-bounce"
+              style={{ animationDelay: "0.32s" }}
+            />
+            <span className="text-sm ml-2">Loading memories...</span>
+          </div>
+        </div>
       ) : memories.length === 0 ? (
-        <p className="text-gray-500 text-sm">
-          No memories found. Start a conversation to build memory.
-        </p>
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <span className="text-5xl mb-4 opacity-30">🧠</span>
+          <p className="text-sm">
+            <span className="gradient-text font-medium">No memories found</span>
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            Start a conversation to build memory
+          </p>
+        </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {memories.map((m) => (
             <MemoryCard key={m.id} memory={m} />
           ))}

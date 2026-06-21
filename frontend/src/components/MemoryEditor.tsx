@@ -43,41 +43,63 @@ export default function MemoryEditor({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      {/* ── Content textarea ─────────────────────────── */}
       <div>
-        <label className="block text-xs text-gray-400 mb-1">Content</label>
+        <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-2">
+          Content
+        </label>
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+          className="w-full glass-input rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500/40 focus:shadow-[0_0_20px_rgba(59,130,246,0.1)] transition-all duration-300 resize-none"
           rows={3}
         />
       </div>
+
+      {/* ── Importance slider ────────────────────────── */}
       <div>
-        <label className="block text-xs text-gray-400 mb-1">
-          Importance ({importance}/10)
+        <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-2">
+          Importance
+          <span className="ml-2 text-blue-400 normal-case">
+            {importance}/10
+          </span>
         </label>
-        <input
-          type="range"
-          min={1}
-          max={10}
-          value={importance}
-          onChange={(e) => setImportance(Number(e.target.value))}
-          className="w-full"
-        />
+        <div className="relative">
+          <input
+            type="range"
+            min={1}
+            max={10}
+            value={importance}
+            onChange={(e) => setImportance(Number(e.target.value))}
+            className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-white/[0.06]
+              [&::-webkit-slider-thumb]:appearance-none
+              [&::-webkit-slider-thumb]:w-4
+              [&::-webkit-slider-thumb]:h-4
+              [&::-webkit-slider-thumb]:rounded-full
+              [&::-webkit-slider-thumb]:bg-gradient-to-r
+              [&::-webkit-slider-thumb]:from-blue-500
+              [&::-webkit-slider-thumb]:to-purple-500
+              [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(59,130,246,0.3)]
+              [&::-webkit-slider-thumb]:cursor-pointer
+              [&::-webkit-slider-thumb]:border-0"
+          />
+        </div>
       </div>
-      <div className="flex gap-2">
+
+      {/* ── Buttons ──────────────────────────────────── */}
+      <div className="flex gap-3 pt-2">
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-500 disabled:opacity-50"
+          className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-medium rounded-xl hover:from-blue-500 hover:to-purple-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-[0_0_25px_rgba(59,130,246,0.3)]"
         >
           {saving ? "Saving..." : "Save Changes"}
         </button>
         <button
           onClick={handleDelete}
           disabled={deleting}
-          className="px-4 py-2 bg-red-700 text-white text-sm rounded-md hover:bg-red-600 disabled:opacity-50"
+          className="px-5 py-2.5 glass text-red-400 text-sm font-medium rounded-xl hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300"
         >
           {deleting ? "Deleting..." : "Delete Memory"}
         </button>

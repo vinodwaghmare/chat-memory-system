@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { sendMessage } from "@/lib/api";
 import type { ConversationResponse } from "@/lib/types";
 
+/* ── localStorage persistence (DO NOT MODIFY) ─────────── */
 const STORAGE_KEY = "chat-memory-messages";
 const CONV_ID_KEY = "chat-memory-conv-id";
 
@@ -22,6 +23,7 @@ function saveMessages(msgs: Message[]) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(msgs));
   } catch {}
 }
+/* ── end persistence ───────────────────────────────────── */
 
 interface Message {
   role: "user" | "assistant";
@@ -40,6 +42,7 @@ export default function ChatInterface() {
   });
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  /* ── Persist state (DO NOT MODIFY) ─────────────────── */
   useEffect(() => {
     saveMessages(messages);
   }, [messages]);
@@ -47,6 +50,7 @@ export default function ChatInterface() {
   useEffect(() => {
     if (conversationId) localStorage.setItem(CONV_ID_KEY, conversationId);
   }, [conversationId]);
+  /* ── end persist ───────────────────────────────────── */
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -85,69 +89,108 @@ export default function ChatInterface() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3rem)] max-w-3xl mx-auto">
-      <div className="flex-1 overflow-y-auto space-y-4 pb-4">
+    <div className="flex flex-col h-[calc(100vh-8rem)] max-w-3xl mx-auto">
+      {/* ── Messages Area ────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto space-y-4 pb-4 pr-2">
         {messages.length === 0 && (
-          <p className="text-gray-500 text-center mt-20">
-            Send a message to start a conversation with memory.
-          </p>
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <span className="text-5xl mb-4 opacity-40">🧠</span>
+            <p className="text-gray-500 text-sm">
+              Send a message to start a conversation with memory.
+            </p>
+            <p className="text-gray-600 text-xs mt-1">
+              Your chat history persists across sessions
+            </p>
+          </div>
         )}
+
         {messages.map((msg, i) => (
           <div
             key={i}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-fade-in`}
           >
             <div
-              className={`max-w-[80%] rounded-lg px-4 py-2 ${
+              className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                 msg.role === "user"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-800 text-gray-200"
+                  ? "bg-gradient-to-br from-blue-600 to-purple-600 text-white shadow-[0_2px_15px_rgba(59,130,246,0.2)]"
+                  : "glass border-white/[0.06] text-gray-200"
               }`}
             >
-              <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-              {msg.role === "assistant" && msg.memoriesUsed && msg.memoriesUsed.length > 0 && (
-                <div className="mt-2 pt-2 border-t border-gray-700">
-                  <p className="text-xs text-gray-400">
-                    Memories used: {msg.memoriesUsed.length} | Stored: {msg.memoriesStored ?? 0}
-                  </p>
-                </div>
-              )}
+              <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                {msg.content}
+              </p>
+              {msg.role === "assistant" &&
+                msg.memoriesUsed &&
+                msg.memoriesUsed.length > 0 && (
+                  <div className="mt-2.5 pt-2 border-t border-white/[0.06]">
+                    <span className="inline-flex items-center gap-1.5 text-[11px] text-gray-400 bg-white/[0.04] px-2.5 py-1 rounded-full">
+                      <span className="text-xs">🧠</span>
+                      Memories used: {msg.memoriesUsed.length} | Stored:{" "}
+                      {msg.memoriesStored ?? 0}
+                    </span>
+                  </div>
+                )}
             </div>
           </div>
         ))}
+
+        {/* ── Typing indicator ───────────────────────── */}
         {loading && (
-          <div className="flex justify-start">
-            <div className="bg-gray-800 rounded-lg px-4 py-2 text-sm text-gray-400">
-              Thinking...
+          <div className="flex justify-start animate-fade-in">
+            <div className="glass rounded-2xl px-5 py-3 border-white/[0.06]">
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="w-2 h-2 rounded-full bg-blue-400/60 animate-dot-bounce"
+                  style={{ animationDelay: "0s" }}
+                />
+                <span
+                  className="w-2 h-2 rounded-full bg-purple-400/60 animate-dot-bounce"
+                  style={{ animationDelay: "0.16s" }}
+                />
+                <span
+                  className="w-2 h-2 rounded-full bg-blue-400/60 animate-dot-bounce"
+                  style={{ animationDelay: "0.32s" }}
+                />
+              </div>
             </div>
           </div>
         )}
         <div ref={bottomRef} />
       </div>
 
-      <div className="border-t border-gray-800 pt-4">
+      {/* ── Input Area ───────────────────────────────── */}
+      <div className="pt-4 border-t border-white/[0.04]">
+        {/* Clear chat */}
         {messages.length > 0 && (
           <button
-            onClick={() => { setMessages([]); setConversationId(""); localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(CONV_ID_KEY); }}
-            className="mb-2 px-3 py-1 text-xs text-gray-400 hover:text-white border border-gray-700 rounded-md"
+            onClick={() => {
+              setMessages([]);
+              setConversationId("");
+              localStorage.removeItem(STORAGE_KEY);
+              localStorage.removeItem(CONV_ID_KEY);
+            }}
+            className="mb-3 px-3 py-1 text-[11px] text-gray-500 hover:text-gray-300 glass rounded-lg hover:bg-white/[0.04] transition-all duration-200"
           >
             Clear Chat
           </button>
         )}
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Send a message..."
-            className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-            disabled={loading}
-          />
+
+        <div className="flex gap-3">
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              placeholder="Send a message..."
+              className="w-full glass-input rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/40 focus:shadow-[0_0_20px_rgba(59,130,246,0.1)] transition-all duration-300"
+              disabled={loading}
+            />
+          </div>
           <button
             onClick={handleSend}
             disabled={loading || !input.trim()}
-            className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-5 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-medium rounded-xl hover:from-blue-500 hover:to-purple-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-[0_0_25px_rgba(59,130,246,0.3)]"
           >
             Send
           </button>

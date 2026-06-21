@@ -6,6 +6,12 @@ import { fetchMemory } from "@/lib/api";
 import type { Memory } from "@/lib/types";
 import MemoryEditor from "@/components/MemoryEditor";
 
+const TYPE_COLORS: Record<string, string> = {
+  semantic: "text-blue-300",
+  procedural: "text-purple-300",
+  episodic: "text-amber-300",
+};
+
 export default function MemoryDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -28,68 +34,107 @@ export default function MemoryDetailPage() {
 
   if (error) {
     return (
-      <div className="max-w-2xl">
-        <p className="text-red-400">{error}</p>
-        <button
-          onClick={() => router.push("/memories")}
-          className="mt-4 text-sm text-blue-400 hover:underline"
-        >
-          Back to memories
-        </button>
+      <div className="max-w-2xl animate-fade-in">
+        <div className="glass rounded-xl p-6 text-center">
+          <span className="text-4xl block mb-3 opacity-40">😵</span>
+          <p className="text-red-400 text-sm">{error}</p>
+          <button
+            onClick={() => router.push("/memories")}
+            className="mt-4 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+          >
+            &larr; Back to memories
+          </button>
+        </div>
       </div>
     );
   }
 
-  if (!memory) return <p className="text-gray-500 text-sm">Loading...</p>;
+  if (!memory)
+    return (
+      <div className="flex items-center gap-3 text-gray-500 py-20 justify-center">
+        <span className="w-2 h-2 rounded-full bg-blue-400 animate-dot-bounce" />
+        <span
+          className="w-2 h-2 rounded-full bg-purple-400 animate-dot-bounce"
+          style={{ animationDelay: "0.16s" }}
+        />
+        <span
+          className="w-2 h-2 rounded-full bg-blue-400 animate-dot-bounce"
+          style={{ animationDelay: "0.32s" }}
+        />
+      </div>
+    );
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-2xl animate-fade-in">
+      {/* ── Back Button ──────────────────────────────── */}
       <button
         onClick={() => router.push("/memories")}
-        className="text-sm text-gray-400 hover:text-white mb-4 inline-block"
+        className="text-sm text-gray-400 hover:text-white mb-6 inline-flex items-center gap-1 transition-colors group"
       >
-        &larr; Back to memories
+        <span className="group-hover:-translate-x-0.5 transition-transform">&larr;</span>
+        <span>Back to memories</span>
       </button>
 
-      <h2 className="text-xl font-bold mb-4">Memory Detail</h2>
+      <h2 className="text-xl font-bold mb-6">
+        <span className="gradient-text">Memory Detail</span>
+      </h2>
 
-      <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 mb-6 space-y-2 text-sm">
-        <div className="flex gap-4">
-          <span className="text-gray-400">ID:</span>
-          <span className="text-gray-200 font-mono text-xs">{memory.id}</span>
-        </div>
-        <div className="flex gap-4">
-          <span className="text-gray-400">Type:</span>
-          <span className="text-gray-200">{memory.type}</span>
-        </div>
-        <div className="flex gap-4">
-          <span className="text-gray-400">Weight:</span>
-          <span className="text-gray-200">{memory.weight.toFixed(4)}</span>
-        </div>
-        <div className="flex gap-4">
-          <span className="text-gray-400">Reinforced:</span>
-          <span className="text-gray-200">
-            {memory.reinforcement_count} times
+      {/* ── Detail Card ──────────────────────────────── */}
+      <div className="glass rounded-xl p-5 mb-8 space-y-3 text-sm animate-slide-up">
+        <DetailRow label="ID">
+          <span className="font-mono text-[11px] text-gray-300 bg-white/[0.04] px-2 py-0.5 rounded">
+            {memory.id}
           </span>
-        </div>
-        <div className="flex gap-4">
-          <span className="text-gray-400">Source:</span>
-          <span className="text-gray-200 font-mono text-xs">
+        </DetailRow>
+        <DetailRow label="Type">
+          <span className={`font-medium ${TYPE_COLORS[memory.type] || "text-gray-300"}`}>
+            {memory.type}
+          </span>
+        </DetailRow>
+        <DetailRow label="Weight">
+          <span className="text-gray-200">{memory.weight.toFixed(4)}</span>
+        </DetailRow>
+        <DetailRow label="Reinforced">
+          <span className="text-gray-200">{memory.reinforcement_count} times</span>
+        </DetailRow>
+        <DetailRow label="Source">
+          <span className="font-mono text-[11px] text-gray-400 bg-white/[0.04] px-2 py-0.5 rounded">
             {JSON.stringify(memory.source)}
           </span>
-        </div>
+        </DetailRow>
         {memory.created_at && (
-          <div className="flex gap-4">
-            <span className="text-gray-400">Created:</span>
+          <DetailRow label="Created">
             <span className="text-gray-200">
               {new Date(memory.created_at).toLocaleString()}
             </span>
-          </div>
+          </DetailRow>
         )}
       </div>
 
-      <h3 className="text-sm text-gray-400 mb-3">Edit / Correct</h3>
-      <MemoryEditor memory={memory} onUpdate={handleUpdate} />
+      {/* ── Editor ───────────────────────────────────── */}
+      <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
+        <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-4">
+          Edit / Correct
+        </h3>
+        <MemoryEditor memory={memory} onUpdate={handleUpdate} />
+      </div>
+    </div>
+  );
+}
+
+function DetailRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-4">
+      <span className="text-gray-500 min-w-[80px] text-xs font-medium uppercase tracking-wider pt-0.5">
+        {label}
+      </span>
+      <div className="flex-1">{children}</div>
     </div>
   );
 }
