@@ -110,13 +110,13 @@ class PgVectorStore(StorageBackend):
                 SELECT id, user_id, type, content, importance, confidence,
                        source, weight, reinforcement_count, archived,
                        created_at, updated_at,
-                       1 - (embedding <=> :vec::vector) AS score
+                       1 - (embedding <=> CAST(:vec AS vector)) AS score
                 FROM memories
-                WHERE user_id = :uid::uuid
+                WHERE user_id = CAST(:uid AS uuid)
                   AND deleted = false
                   AND archived = false
                   AND embedding IS NOT NULL
-                ORDER BY embedding <=> :vec::vector
+                ORDER BY embedding <=> CAST(:vec AS vector)
                 LIMIT :topk
             """)
             result = await self._session.execute(
