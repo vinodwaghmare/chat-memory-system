@@ -81,7 +81,8 @@ class ConcreteLLMClient(LLMClient):
                 return result
             except Exception as exc:
                 last_error = exc
-                is_quota = "insufficient_quota" in str(exc) or "429" in str(exc)
+                exc_str = str(exc).lower()
+                is_quota = any(k in exc_str for k in ["insufficient_quota", "429", "quota", "rate_limit", "connection error"])
                 if is_quota and cfg.openrouter_api_key:
                     logger.warning("OpenAI quota exceeded, falling back to OpenRouter")
                     return await self._openrouter_fallback(
