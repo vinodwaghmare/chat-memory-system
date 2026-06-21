@@ -2,7 +2,7 @@ import type { Memory, ConversationResponse, HealthStatus } from "./types";
 
 const API_HOST = process.env.NEXT_PUBLIC_BACKEND_URL || "";
 const BASE = `${API_HOST}/api/v1`;
-const DEFAULT_USER_ID = "demo-user-001";
+const DEFAULT_USER_ID = "550e8400-e29b-41d4-a716-446655440000";
 
 function headers(userId?: string): HeadersInit {
   return {
