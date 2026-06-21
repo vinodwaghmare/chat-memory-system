@@ -6,12 +6,15 @@ Every query enforces user_id (Invariant 1) and deleted=false (Invariant 2).
 
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import select, text, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger(__name__)
 
 from backend.core.storage_backend import StorageBackend
 from backend.database.models import AuditLogORM, MemoryORM
