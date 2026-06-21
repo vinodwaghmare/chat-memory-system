@@ -1,6 +1,7 @@
 import type { Memory, ConversationResponse, HealthStatus } from "./types";
 
-const BASE = "/api/v1";
+const API_HOST = process.env.NEXT_PUBLIC_BACKEND_URL || "";
+const BASE = `${API_HOST}/api/v1`;
 const DEFAULT_USER_ID = "demo-user-001";
 
 function headers(userId?: string): HeadersInit {
@@ -74,7 +75,7 @@ export async function sendMessage(
 }
 
 export async function fetchHealth(): Promise<HealthStatus> {
-  const res = await fetch("/health");
+  const res = await fetch(`${API_HOST}/health`);
   if (!res.ok) throw new Error(`Health check failed: ${res.status}`);
   return res.json();
 }

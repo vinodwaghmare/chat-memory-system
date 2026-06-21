@@ -7,6 +7,7 @@ Shutdown disconnects cleanly.
 from __future__ import annotations
 
 import logging
+import os
 from contextlib import asynccontextmanager
 from importlib.metadata import PackageNotFoundError, version
 
@@ -72,10 +73,15 @@ app = FastAPI(
 )
 
 # --- CORS ---
-if settings.is_development:
+cors_origins = ["*"] if settings.is_development else [
+    origin.strip()
+    for origin in os.environ.get("CORS_ORIGINS", "").split(",")
+    if origin.strip()
+]
+if cors_origins:
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
