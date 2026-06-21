@@ -54,41 +54,35 @@ The result: conversations that feel like they have continuity.
 
 ```mermaid
 graph TB
-    subgraph "Write Path"
-        M[User Message] --> EX[Extractor<br/>LLM identifies memories]
-        EX --> EV[Evaluator<br/>Utility + dedup check]
-        EV -->|approved| EMB[Embedding Service<br/>text-embedding-3-small]
-        EV -->|rejected| DROP[Dropped]
-        EMB --> ST[PgVector Store<br/>PostgreSQL + pgvector]
-        ST --> AL[Audit Log<br/>Append-only]
+    subgraph WritePath["Write Path"]
+        M["User Message"] --> EX["Extractor (LLM)"]
+        EX --> EV["Evaluator (utility + dedup)"]
+        EV -->|approved| EMB["Embedding Service"]
+        EV -->|rejected| DROP["Dropped"]
+        EMB --> ST["PgVector Store"]
+        ST --> AL["Audit Log"]
     end
 
-    subgraph "Read Path"
-        Q[User Query] --> QE[Query Embedding]
-        QE --> VS[Vector Search<br/>Cosine similarity]
-        QE --> KS[Keyword Search<br/>Full-text matching]
-        VS --> MR[Merge + Deduplicate]
+    subgraph ReadPath["Read Path"]
+        Q["User Query"] --> QE["Query Embedding"]
+        QE --> VS["Vector Search"]
+        QE --> KS["Keyword Search"]
+        VS --> MR["Merge + Deduplicate"]
         KS --> MR
-        MR --> RK[Ranking Service<br/>Multi-factor scoring]
-        RK --> CC[Context Composer<br/>Token-budgeted formatting]
-        CC --> LLM[Response LLM<br/>With memory context]
+        MR --> RK["Ranking Service"]
+        RK --> CC["Context Composer"]
+        CC --> LLM["Response LLM"]
     end
 
-    subgraph "Background Jobs"
-        DJ[Decay Job<br/>Weight reduction on schedule]
-        RJ[Reflection Job<br/>Memory consolidation]
+    subgraph Jobs["Background Jobs"]
+        DJ["Decay Job"]
+        RJ["Reflection Job"]
     end
 
     ST -.-> VS
     ST -.-> KS
     DJ -.-> ST
     RJ -.-> ST
-
-    style M fill:#2563eb,color:#fff
-    style Q fill:#2563eb,color:#fff
-    style LLM fill:#7c3aed,color:#fff
-    style DROP fill:#dc2626,color:#fff
-    style ST fill:#059669,color:#fff
 ```
 
 ### Write Path

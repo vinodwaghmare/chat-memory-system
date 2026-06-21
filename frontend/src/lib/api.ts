@@ -76,6 +76,6 @@ export async function sendMessage(
 
 export async function fetchHealth(): Promise<HealthStatus> {
   const res = await fetch(`${API_HOST}/health`);
-  if (!res.ok) throw new Error(`Health check failed: ${res.status}`);
-  return res.json();
+  const data = await res.json();
+  return data;
 }
