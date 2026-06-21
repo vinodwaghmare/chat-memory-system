@@ -1,10 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
   async rewrites() {
+    const backend = process.env.BACKEND_URL || "http://localhost:8001";
     return [
       {
         source: "/api/:path*",
-        destination: "http://localhost:8001/api/:path*",
+        destination: `${backend}/api/:path*`,
+      },
+      {
+        source: "/health",
+        destination: `${backend}/health`,
       },
     ];
   },
