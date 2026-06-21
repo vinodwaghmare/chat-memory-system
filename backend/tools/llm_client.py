@@ -101,16 +101,20 @@ class ConcreteLLMClient(LLMClient):
         try:
             from openai import AsyncOpenAI
 
-            client = AsyncOpenAI(api_key=cfg.openai_api_key)
+            client_kwargs: dict[str, Any] = {"api_key": cfg.openai_api_key}
+            if cfg.openai_base_url:
+                client_kwargs["base_url"] = cfg.openai_base_url
+            client = AsyncOpenAI(**client_kwargs)
             all_embeddings: list[list[float]] = []
+
+            embed_kwargs: dict[str, Any] = {"model": model, "input": None}
+            if not cfg.openai_base_url:
+                embed_kwargs["dimensions"] = dimensions
 
             for i in range(0, len(texts), 100):
                 batch = texts[i:i + 100]
-                resp = await client.embeddings.create(
-                    model=model,
-                    input=batch,
-                    dimensions=dimensions,
-                )
+                embed_kwargs["input"] = batch
+                resp = await client.embeddings.create(**embed_kwargs)
                 all_embeddings.extend([d.embedding for d in resp.data])
 
             return all_embeddings
@@ -129,7 +133,11 @@ class ConcreteLLMClient(LLMClient):
     ) -> LLMResponse:
         from openai import AsyncOpenAI
 
-        client = AsyncOpenAI(api_key=api_key)
+        cfg = get_settings()
+        client_kwargs: dict[str, Any] = {"api_key": api_key}
+        if cfg.openai_base_url:
+            client_kwargs["base_url"] = cfg.openai_base_url
+        client = AsyncOpenAI(**client_kwargs)
         full_messages = []
         if system_prompt:
             full_messages.append({"role": "system", "content": system_prompt})
@@ -141,7 +149,7 @@ class ConcreteLLMClient(LLMClient):
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
-        if response_format:
+        if response_format and not cfg.openai_base_url:
             kwargs["response_format"] = response_format
 
         resp = await client.chat.completions.create(**kwargs)

@@ -31,27 +31,27 @@ class ModelConfig:
 _DEFAULT_ROUTES: dict[TaskType, ModelConfig] = {
     TaskType.EXTRACTION: ModelConfig(
         provider="openai",
-        model_name="gpt-4o-mini",
+        model_name=os.environ.get("EXTRACTION_MODEL", "gpt-4o-mini"),
         max_input_tokens=4096,
         max_output_tokens=1024,
         temperature=0.0,
     ),
     TaskType.EVALUATION: ModelConfig(
         provider="openai",
-        model_name="gpt-4o-mini",
+        model_name=os.environ.get("EVALUATION_MODEL", "gpt-4o-mini"),
         max_input_tokens=2048,
         max_output_tokens=512,
         temperature=0.0,
     ),
     TaskType.EMBEDDING: ModelConfig(
         provider="openai",
-        model_name="text-embedding-3-small",
+        model_name=os.environ.get("EMBEDDING_MODEL", "text-embedding-3-small"),
         max_input_tokens=8191,
         max_output_tokens=0,
     ),
     TaskType.RESPONSE: ModelConfig(
         provider="openai",
-        model_name="gpt-4o",
+        model_name=os.environ.get("RESPONSE_MODEL", "gpt-4o"),
         max_input_tokens=8192,
         max_output_tokens=2048,
         temperature=0.7,

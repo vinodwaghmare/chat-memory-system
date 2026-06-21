@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     # LLM Providers
     # -------------------------------------------------------------------------
     openai_api_key: str = ""
+    openai_base_url: str = ""
     anthropic_api_key: str = ""
     openai_embedding_model: str = "text-embedding-3-small"
     openai_embedding_dimensions: int = 1536
