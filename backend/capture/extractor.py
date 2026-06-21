@@ -59,9 +59,16 @@ class MemoryExtractor:
         if isinstance(content, list):
             items = content
         elif isinstance(content, dict):
-            items = content.get("memories", content.get("candidates", []))
-            if not isinstance(items, list):
+            if "memories" in content:
+                items = content["memories"]
+            elif "candidates" in content:
+                items = content["candidates"]
+            elif "type" in content and "content" in content:
                 items = [content]
+            else:
+                items = [content]
+            if not isinstance(items, list):
+                items = [items]
         elif isinstance(content, str):
             return []
         else:
