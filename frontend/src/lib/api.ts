@@ -2,12 +2,22 @@ import type { Memory, ConversationResponse, HealthStatus } from "./types";
 
 const API_HOST = process.env.NEXT_PUBLIC_BACKEND_URL || "";
 const BASE = `${API_HOST}/api/v1`;
-const DEFAULT_USER_ID = "550e8400-e29b-41d4-a716-446655440000";
+const USER_ID_KEY = "chat-memory-user-id";
+
+function getUserId(): string {
+  if (typeof window === "undefined") return "00000000-0000-0000-0000-000000000000";
+  let id = localStorage.getItem(USER_ID_KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(USER_ID_KEY, id);
+  }
+  return id;
+}
 
 function headers(userId?: string): HeadersInit {
   return {
     "Content-Type": "application/json",
-    "X-User-ID": userId || DEFAULT_USER_ID,
+    "X-User-ID": userId || getUserId(),
   };
 }
 
