@@ -6,6 +6,7 @@ Output guardrail: validates JSON responses, handles malformed output.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import time
@@ -83,7 +84,6 @@ class ConcreteLLMClient(LLMClient):
                 if attempt < 2:
                     wait = 2 ** attempt
                     logger.warning("LLM call failed (attempt %d), retrying in %ds: %s", attempt + 1, wait, exc)
-                    import asyncio
                     await asyncio.sleep(wait)
 
         raise LLMClientError(provider, str(last_error))

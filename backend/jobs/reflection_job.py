@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import logging
 
+import uuid as uuid_mod
+
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -35,7 +37,7 @@ class ReflectionJob:
         stmt = (
             select(MemoryORM)
             .where(
-                MemoryORM.user_id == user_id,
+                MemoryORM.user_id == uuid_mod.UUID(user_id),
                 MemoryORM.deleted == False,  # noqa: E712
                 MemoryORM.archived == False,  # noqa: E712
             )
