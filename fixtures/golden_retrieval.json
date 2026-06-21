@@ -1,0 +1,32 @@
+[
+  {
+    "query": "What database do I use?",
+    "user_id": "test-user",
+    "expected_contents": ["Uses PostgreSQL"],
+    "expected_types": ["semantic"]
+  },
+  {
+    "query": "How do I like my answers?",
+    "user_id": "test-user",
+    "expected_contents": ["Prefers short answers"],
+    "expected_types": ["procedural"]
+  },
+  {
+    "query": "What programming language do I know?",
+    "user_id": "test-user",
+    "expected_contents": ["Knows Python"],
+    "expected_types": ["semantic"]
+  },
+  {
+    "query": "Tell me about my startup",
+    "user_id": "test-user",
+    "expected_contents": ["Building SecondBrainLabs"],
+    "expected_types": ["semantic"]
+  },
+  {
+    "query": "What have I traveled to recently?",
+    "user_id": "test-user",
+    "expected_contents": ["Visited Kashmir"],
+    "expected_types": ["episodic"]
+  }
+]
