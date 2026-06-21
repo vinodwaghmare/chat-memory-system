@@ -26,6 +26,7 @@ from backend.models.enums import WorkflowStatus
 from backend.orchestrator.nodes import ReadNodes, WriteNodes
 from backend.retrieve.hybrid_retriever import HybridRetriever
 from backend.store.write_service import WriteService
+from backend.tools.embedding_service import EmbeddingService
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,7 @@ class SequentialWorkflowEngine(WorkflowEngine):
         self._write_nodes = WriteNodes(
             extractor=MemoryExtractor(llm_client),
             evaluator=MemoryEvaluator(llm_client),
-            write_service=WriteService(store),
+            write_service=WriteService(store, EmbeddingService(llm_client)),
         )
         self._read_nodes = ReadNodes(
             retriever=retriever,

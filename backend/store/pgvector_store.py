@@ -46,6 +46,7 @@ class PgVectorStore(StorageBackend):
             user_id=uuid.UUID(record.user_id),
             type=record.type.value,
             content=record.content,
+            embedding=record.embedding,
             importance=record.importance,
             confidence=record.confidence,
             source=record.source,

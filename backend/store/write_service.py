@@ -34,10 +34,18 @@ class WriteService:
         confidence: float,
         source: dict[str, Any] | None = None,
     ) -> str:
+        embedding = None
+        if self._embedding:
+            try:
+                embedding = await self._embedding.embed_single(candidate.content)
+            except Exception as exc:
+                logger.warning("Embedding failed (storing without): %s", exc)
+
         record = MemoryRecord(
             user_id=user_id,
             type=candidate.type,
             content=candidate.content,
+            embedding=embedding,
             importance=importance,
             confidence=confidence,
             source=source or {},
