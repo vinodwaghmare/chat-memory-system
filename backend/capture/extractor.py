@@ -46,7 +46,10 @@ class MemoryExtractor:
             response_format={"type": "json_object"},
         )
 
-        return self._parse_candidates(response.content)
+        logger.info("Extraction raw content type=%s value=%s", type(response.content).__name__, str(response.content)[:500])
+        candidates = self._parse_candidates(response.content)
+        logger.info("Extraction produced %d candidates", len(candidates))
+        return candidates
 
     def _parse_candidates(self, content: Any) -> list[CandidateMemory]:
         if content is None:
