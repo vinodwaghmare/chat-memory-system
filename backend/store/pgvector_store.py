@@ -109,7 +109,7 @@ class PgVectorStore(StorageBackend):
                        created_at, updated_at,
                        1 - (embedding <=> :vec::vector) AS score
                 FROM memories
-                WHERE user_id = :uid
+                WHERE user_id = :uid::uuid
                   AND deleted = false
                   AND archived = false
                   AND embedding IS NOT NULL
@@ -133,7 +133,8 @@ class PgVectorStore(StorageBackend):
                 ), float(r.score))
                 for r in rows
             ]
-        except Exception:
+        except Exception as exc:
+            logger.warning("Vector search error: %s", exc)
             return []
 
     async def search_keyword(
