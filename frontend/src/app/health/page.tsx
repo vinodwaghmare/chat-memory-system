@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { fetchHealth } from "@/lib/api";
 import type { HealthStatus } from "@/lib/types";
+import { Activity } from "lucide-react";
 import HealthBadge from "@/components/HealthBadge";
 
 export default function HealthPage() {
@@ -21,7 +22,8 @@ export default function HealthPage() {
 
   return (
     <div className="max-w-2xl">
-      <div className="mb-8">
+      <div className="mb-8 flex items-center gap-3">
+        <Activity className="w-6 h-6 text-blue-400" />
         <h2 className="text-2xl font-bold text-white">
           System Health
         </h2>

@@ -5,6 +5,7 @@ import { fetchMemories, fetchHealth } from "@/lib/api";
 import type { Memory, HealthStatus } from "@/lib/types";
 import HealthBadge from "@/components/HealthBadge";
 import Link from "next/link";
+import { BarChart3, Database, Cog, Clock, Brain, MessageSquare, AlertTriangle, ArrowRight } from "lucide-react";
 
 export default function DashboardPage() {
   const [memories, setMemories] = useState<Memory[]>([]);
@@ -42,7 +43,7 @@ export default function DashboardPage() {
       {error && (
         <div className="bg-[#262626] border border-red-500/30 rounded-xl p-4 mb-8">
           <div className="flex items-center gap-3">
-            <span className="text-red-400 text-lg">⚠️</span>
+            <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0" />
             <div>
               <p className="text-sm text-red-400">{error}</p>
               <p className="text-xs text-[#a3a3a3] mt-0.5">
@@ -80,7 +81,7 @@ export default function DashboardPage() {
         {/* Total */}
         <div className="bg-[#262626] border border-[#333] rounded-xl p-5">
           <div className="flex items-start justify-between mb-3">
-            <span className="text-2xl">📊</span>
+            <BarChart3 className="w-5 h-5 text-blue-400" />
             <span className="text-[10px] text-[#a3a3a3] bg-[#2a2a2a] border border-[#404040] px-2 py-0.5 rounded-full">total</span>
           </div>
           <p className="text-3xl font-bold text-blue-400">
@@ -92,7 +93,7 @@ export default function DashboardPage() {
         {/* Semantic */}
         <div className="bg-[#262626] border border-[#333] rounded-xl p-5">
           <div className="flex items-start justify-between mb-3">
-            <span className="text-2xl">🔵</span>
+            <Database className="w-5 h-5 text-cyan-400" />
             <span className="text-[10px] text-[#a3a3a3] bg-[#2a2a2a] border border-[#404040] px-2 py-0.5 rounded-full">semantic</span>
           </div>
           <p className="text-3xl font-bold text-cyan-400">
@@ -104,7 +105,7 @@ export default function DashboardPage() {
         {/* Procedural */}
         <div className="bg-[#262626] border border-[#333] rounded-xl p-5">
           <div className="flex items-start justify-between mb-3">
-            <span className="text-2xl">🟣</span>
+            <Cog className="w-5 h-5 text-purple-400" />
             <span className="text-[10px] text-[#a3a3a3] bg-[#2a2a2a] border border-[#404040] px-2 py-0.5 rounded-full">procedural</span>
           </div>
           <p className="text-3xl font-bold text-purple-400">
@@ -116,7 +117,7 @@ export default function DashboardPage() {
         {/* Episodic */}
         <div className="bg-[#262626] border border-[#333] rounded-xl p-5">
           <div className="flex items-start justify-between mb-3">
-            <span className="text-2xl">🟡</span>
+            <Clock className="w-5 h-5 text-amber-400" />
             <span className="text-[10px] text-[#a3a3a3] bg-[#2a2a2a] border border-[#404040] px-2 py-0.5 rounded-full">episodic</span>
           </div>
           <p className="text-3xl font-bold text-amber-400">
@@ -132,17 +133,17 @@ export default function DashboardPage() {
           href="/memories"
           className="bg-[#2a2a2a] border border-[#404040] rounded-xl px-6 py-3 text-sm font-medium text-[#e5e5e5] hover:bg-[#333] transition-colors flex items-center gap-2"
         >
-          <span>🧠</span>
+          <Brain className="w-4 h-4" />
           <span>Browse Memories</span>
-          <span className="text-[#666] ml-1">&rarr;</span>
+          <ArrowRight className="w-3.5 h-3.5 text-[#666] ml-1" />
         </Link>
         <Link
           href="/conversations"
           className="bg-blue-600 hover:bg-blue-500 rounded-xl px-6 py-3 text-sm font-medium text-white transition-colors flex items-center gap-2"
         >
-          <span>💬</span>
+          <MessageSquare className="w-4 h-4" />
           <span>Start Chatting</span>
-          <span className="ml-1">&rarr;</span>
+          <ArrowRight className="w-3.5 h-3.5 ml-1" />
         </Link>
       </div>
     </div>

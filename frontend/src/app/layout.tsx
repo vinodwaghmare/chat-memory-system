@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Link from "next/link";
+import { LayoutDashboard, Brain, MessageSquare, Activity } from "lucide-react";
 import "./globals.css";
 
 const inter = Inter({
@@ -15,10 +16,10 @@ export const metadata: Metadata = {
 };
 
 const NAV_ITEMS = [
-  { href: "/", label: "Dashboard", icon: "📊" },
-  { href: "/memories", label: "Memories", icon: "🧠" },
-  { href: "/conversations", label: "Chat", icon: "💬" },
-  { href: "/health", label: "Health", icon: "❤️" },
+  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/memories", label: "Memories", icon: Brain },
+  { href: "/conversations", label: "Chat", icon: MessageSquare },
+  { href: "/health", label: "Health", icon: Activity },
 ];
 
 export default function RootLayout({
@@ -35,28 +36,31 @@ export default function RootLayout({
             {/* Brand */}
             <div className="px-5 py-6 mb-2">
               <div className="flex items-center gap-2.5">
-                <span className="text-xl">🧠</span>
+                <Brain className="w-5 h-5 text-blue-400" />
                 <h1 className="text-lg font-bold text-white tracking-tight">
                   Memory System
                 </h1>
               </div>
-              <p className="text-[11px] text-[#a3a3a3] mt-1.5 pl-[34px]">
+              <p className="text-[11px] text-[#a3a3a3] mt-1.5 pl-[30px]">
                 Neural memory engine
               </p>
             </div>
 
             {/* Navigation */}
             <div className="flex flex-col gap-0.5 px-3 flex-1">
-              {NAV_ITEMS.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[#a3a3a3] hover:bg-[#2a2a2a] hover:text-white transition-colors"
-                >
-                  <span className="text-base">{item.icon}</span>
-                  <span className="font-medium">{item.label}</span>
-                </Link>
-              ))}
+              {NAV_ITEMS.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[#a3a3a3] hover:bg-[#2a2a2a] hover:text-white transition-colors"
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span className="font-medium">{item.label}</span>
+                  </Link>
+                );
+              })}
             </div>
           </nav>
 

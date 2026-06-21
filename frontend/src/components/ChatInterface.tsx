@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { sendMessage } from "@/lib/api";
 import type { ConversationResponse } from "@/lib/types";
+import { Brain, Send, Trash2 } from "lucide-react";
 
 /* ── localStorage persistence (DO NOT MODIFY) ─────────── */
 const STORAGE_KEY = "chat-memory-messages";
@@ -94,7 +95,7 @@ export default function ChatInterface() {
       <div className="flex-1 overflow-y-auto space-y-4 pb-4 pr-2">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <span className="text-5xl mb-4">🧠</span>
+            <Brain className="w-12 h-12 mb-4 text-[#555]" />
             <p className="text-[#666] text-sm">
               Send a message to start a conversation with memory.
             </p>
@@ -124,7 +125,7 @@ export default function ChatInterface() {
                 msg.memoriesUsed.length > 0 && (
                   <div className="mt-2.5 pt-2 border-t border-[#404040]">
                     <span className="inline-flex items-center gap-1.5 text-[11px] text-[#a3a3a3] bg-[#2a2a2a] px-2.5 py-1 rounded-full">
-                      <span className="text-xs">🧠</span>
+                      <Brain className="w-3 h-3" />
                       Memories used: {msg.memoriesUsed.length} | Stored:{" "}
                       {msg.memoriesStored ?? 0}
                     </span>
@@ -160,8 +161,9 @@ export default function ChatInterface() {
               localStorage.removeItem(STORAGE_KEY);
               localStorage.removeItem(CONV_ID_KEY);
             }}
-            className="mb-3 px-3 py-1 text-[11px] text-[#666] hover:text-[#999] transition-colors"
+            className="mb-3 px-3 py-1 text-[11px] text-[#666] hover:text-[#999] transition-colors flex items-center gap-1.5"
           >
+            <Trash2 className="w-3 h-3" />
             Clear Chat
           </button>
         )}
@@ -181,9 +183,9 @@ export default function ChatInterface() {
           <button
             onClick={handleSend}
             disabled={loading || !input.trim()}
-            className="px-5 py-3 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="px-5 py-3 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
           >
-            Send
+            <Send className="w-4 h-4" />
           </button>
         </div>
       </div>

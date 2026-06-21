@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { fetchMemories } from "@/lib/api";
 import type { Memory } from "@/lib/types";
 import MemoryCard from "@/components/MemoryCard";
+import { Brain } from "lucide-react";
 
 const TYPES = ["all", "semantic", "procedural", "episodic"] as const;
 
@@ -32,7 +33,8 @@ export default function MemoriesPage() {
     <div className="max-w-5xl">
       {/* Header */}
       <div className="flex items-end justify-between mb-8">
-        <div>
+        <div className="flex items-center gap-3">
+          <Brain className="w-6 h-6 text-blue-400" />
           <h2 className="text-2xl font-bold text-white">
             Memories
           </h2>
