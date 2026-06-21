@@ -1,113 +1,298 @@
 # Chat Memory System
 
-A production-grade ChatGPT-style memory system that selectively retains information across conversations to improve future interactions.
+A memory layer for conversational AI that selectively retains information across conversations to improve future interactions.
 
-## What It Does
+Instead of treating every conversation as stateless, this system extracts facts, preferences, and experiences from messages, evaluates whether they are worth remembering, and retrieves relevant memories to personalize responses. It is a complete implementation of the write-evaluate-store-retrieve-rank-compose loop, deployed on Google Cloud with PostgreSQL + pgvector.
 
-- **Extracts** memories from conversations (preferences, facts, goals, experiences)
-- **Evaluates** each candidate's future utility before storing (write gate)
-- **Retrieves** relevant memories via hybrid search (vector + keyword + graph)
-- **Ranks** by a weighted formula: 0.4 semantic + 0.2 recency + 0.2 frequency + 0.2 importance
-- **Decays** unused memories over time; reinforces useful ones
-- **Respects** four invariants: user isolation, deletion, graceful degradation, provenance
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB.svg)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.111+-009688.svg)](https://fastapi.tiangolo.com)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791.svg)](https://postgresql.org)
+[![pgvector](https://img.shields.io/badge/pgvector-0.3+-4169E1.svg)](https://github.com/pgvector/pgvector)
+[![Next.js](https://img.shields.io/badge/Next.js-14-000000.svg)](https://nextjs.org)
+
+## Screenshots
+
+| Dashboard | Memory Browser |
+|-----------|---------------|
+| ![Dashboard](docs/images/dashboard.png) | ![Memories](docs/images/memories.png) |
+
+## Why This Exists
+
+Most LLM applications are stateless. Each conversation starts from zero. Users repeat themselves, preferences are forgotten, and context from previous sessions is lost.
+
+Commercial products like ChatGPT have added memory features, but the implementation details are opaque. This project is an open implementation of a production memory system that:
+
+- Decides what is worth remembering (not everything is)
+- Stores memories with vector embeddings for semantic search
+- Retrieves relevant memories using multiple strategies
+- Manages memory lifecycle through decay and consolidation
+- Enforces user isolation at the database level
+
+## Key Features
+
+- **Selective extraction**: LLM-powered extraction of facts, preferences, and experiences from conversation turns
+- **Write gate**: Each candidate memory is evaluated for utility and deduplicated before storage
+- **Hybrid retrieval**: Vector similarity search + keyword search, merged and deduplicated
+- **Weighted ranking**: `0.4 * semantic + 0.2 * recency + 0.2 * frequency + 0.2 * importance` (all weights configurable)
+- **Memory decay**: Unused memories lose weight over time (factor: 0.95 per cycle). Memories below threshold are archived
+- **Reflection agent**: Consolidates old memories into summaries, archives originals while preserving provenance
+- **User isolation**: Row-level security on PostgreSQL. Every query filters by `user_id`
+- **Soft delete**: Deleted memories are never returned but remain in the database for audit
+- **Audit logging**: Append-only log of all memory operations with timestamps
+- **PII detection**: Regex-based filtering for credit cards, SSNs, API keys (Presidio integration planned)
+- **LLM fallback**: Automatic failover from OpenAI to OpenRouter when quota is exhausted
+- **Model routing**: Different models for different tasks (extraction: gpt-4o-mini, response: gpt-4o)
 
 ## Architecture
 
 ```
-WRITE PATH                    READ PATH
-Message                       New Query
-    ↓                             ↓
-Extractor (LLM)               Retriever (vector+keyword+graph)
-    ↓                             ↓
-Evaluator (utility+PII)       Ranking Service
-    ↓                             ↓
-Write Service                 Context Composer
-    ↓                             ↓
-Memory Store ───────────────→ Response LLM
+WRITE PATH                          READ PATH
+Message                             New Query
+    |                                   |
+    v                                   v
+Extractor (LLM)                     Embed Query
+    |                                   |
+    v                                   v
+Evaluator (LLM)                     Hybrid Retriever
+  keep/drop                         vector + keyword
+    |                                   |
+    v                                   v
+Embed + Store                       Ranking Service
+    |                             (4-factor scoring)
+    v                                   |
+PostgreSQL + pgvector                   v
+    |                             Context Composer
+    v                            (token-budgeted)
+Audit Log                              |
+                                       v
+                                  Response LLM
+                                (with memory context)
 
-BACKGROUND: Decay Job, Reflection Agent
-PLANES:     Observability, Security, Governance
+BACKGROUND JOBS
+  Decay Job       - reduces memory weights on schedule
+  Reflection Job  - consolidates old memories into summaries
 ```
 
-## Stack
+### Write Path
 
-| Layer | Technology |
-|-------|-----------|
-| Web framework | FastAPI |
-| Database | PostgreSQL + pgvector |
-| Session cache | Redis |
-| Orchestration | LangGraph (Temporal deferred) |
-| LLM (primary) | OpenAI (GPT-4o-mini, text-embedding-3-small) |
-| LLM (secondary) | Anthropic Claude |
-| Frontend | Next.js 14 + Tailwind |
+1. **Extract**: The LLM reads the user message and produces candidate memories as structured JSON (type, content, importance)
+2. **Evaluate**: Each candidate is checked for utility and duplication against existing memories. Low-value candidates are dropped
+3. **Embed**: Approved memories are embedded using `text-embedding-3-small` (1536 dimensions)
+4. **Store**: Memories are persisted to PostgreSQL with their embeddings, importance scores, and source metadata
+5. **Audit**: Every write operation is logged to an append-only audit table
 
-## Quick Start
+### Read Path
 
-```bash
-# Clone and setup
-cp .env.example .env
-# Fill in OPENAI_API_KEY and ANTHROPIC_API_KEY
+1. **Retrieve**: The query is embedded and searched against stored memories using cosine similarity. A parallel keyword search runs simultaneously
+2. **Rank**: Results from both searches are merged, deduplicated, and scored using the 4-factor formula
+3. **Compose**: Top memories are grouped by type (facts, preferences, experiences) and formatted into a context block within a token budget
+4. **Respond**: The LLM generates a response with the memory context injected into the system prompt
 
-# Start infrastructure
-docker compose -f docker-compose.dev.yml up --build
+## Design Principles
 
-# Or run locally
-pip install -e ".[dev]"
-uvicorn backend.main:app --reload
-```
+The system enforces four invariants at all times:
 
-## 20-Phase Build Roadmap
+| # | Invariant | Enforcement |
+|---|-----------|-------------|
+| 1 | User A's memories are never returned to User B | Row-level security + `user_id` filter on every query |
+| 2 | Deleted memories are never retrieved | `deleted = false` filter on every retrieval query |
+| 3 | Retrieval failure never blocks a response | Try-catch with fallback to memoryless response |
+| 4 | Every memory carries provenance | `source` JSONB field + append-only audit log |
 
-| # | Phase | Status |
-|---|-------|--------|
-| 0 | Cognitive Design — mission, classification, 10-question framework | Done |
-| 1 | System Architecture — module graph, ADRs, dependency hierarchy | Done |
-| 2 | Frontend — Next.js dashboard, memory browser, HITL corrections | Sprint 9 |
-| 3 | Backend & API — CRUD endpoints, database repository | Sprint 2 |
-| 4 | Workflow Orchestration — LangGraph write/read paths | Sprint 5 |
-| 5 | LLM & Reasoning — extractor, evaluator, model router | Sprint 3 |
-| 6 | Memory Architecture — pgvector, hybrid retrieval, ranking | Sprint 4 |
-| 7 | Tooling & Sandboxing — PII filter, user memory tools | Sprint 6 |
-| 8 | Multi-Agent — contracts, reflection agent, decay job | Sprint 7 |
-| 9 | Evaluation — golden dataset, precision/recall, regression gate | Sprint 8 |
-| 10-20 | Production hardening | Deferred (see docs/FUTURE_WORK.md) |
+## Why Not Just Vector Search?
 
-## Project Structure
+| Approach | Store Everything + Vector Search | This System |
+|----------|--------------------------------|-------------|
+| Write gate | None. Everything is stored | LLM evaluates utility before storing |
+| Deduplication | None. Duplicates accumulate | Evaluator checks against existing memories |
+| Retrieval | Vector similarity only | Hybrid: vector + keyword, merged and ranked |
+| Ranking | Raw similarity score | 4-factor weighted score (semantic, recency, frequency, importance) |
+| Lifecycle | Memories persist forever | Decay reduces weight over time. Reflection consolidates old memories |
+| Provenance | No tracking | Source metadata + audit log on every operation |
+
+## Tech Stack
+
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| API Framework | FastAPI | Async REST API with dependency injection |
+| Database | PostgreSQL 15 + pgvector | Structured data + vector similarity search |
+| ORM | SQLAlchemy (async) + asyncpg | Async database access with connection pooling |
+| Cache | Redis | Session memory and caching (optional, graceful degradation) |
+| LLM (primary) | OpenAI (gpt-4o-mini, gpt-4o) | Extraction, evaluation, response generation |
+| LLM (fallback) | OpenRouter (free models) | Automatic failover when primary quota exhausted |
+| Embeddings | text-embedding-3-small (1536d) | Vector representation for semantic search |
+| Frontend | Next.js 14 + Tailwind CSS | Dashboard, memory browser, chat interface |
+| Icons | Lucide React | UI iconography |
+| Containerization | Docker + Docker Compose | Local development stack |
+| Cloud | Google Cloud (Cloud Run, Cloud SQL) | Production deployment |
+
+## Repository Structure
 
 ```
 backend/
-├── core/           ABCs: MemoryEngine, WorkflowEngine, StorageBackend, LLMClient
-├── models/         Pydantic schemas, enums
-├── config/         pydantic-settings
-├── database/       SQLAlchemy ORM, async pool
-├── capture/        Extractor + Evaluator (write gate)
-├── store/          pgvector store, Redis session
-├── retrieve/       Hybrid retriever, ranking
-├── context/        Context composer
-├── agents/         Typed contracts, base agent
-├── orchestrator/   LangGraph state, nodes, graph
-├── memory/         MemoryService (high-level)
-├── tools/          LLM client, model router, PII filter
-├── jobs/           Decay, reflection (background)
-├── evaluation/     Golden dataset, metrics, judge
-├── api/            REST routers
-├── auth/           User ID extraction
-├── prompts/        Versioned prompt templates
-└── main.py         FastAPI entry point
+  core/           # Abstract interfaces: MemoryEngine, WorkflowEngine, StorageBackend, LLMClient
+  models/         # Pydantic schemas and enums (MemoryRecord, ConversationRequest/Response)
+  config/         # Application settings via pydantic-settings (all env-driven)
+  database/       # SQLAlchemy ORM models, async connection pool, repository layer
+  capture/        # Write gate: Extractor (LLM) + Evaluator (LLM)
+  store/          # PgVectorStore (implements StorageBackend), WriteService, Redis session store
+  retrieve/       # HybridRetriever (vector + keyword), RankingService, GraphRetriever
+  context/        # ContextComposer (token-budgeted memory formatting)
+  orchestrator/   # SequentialWorkflowEngine, state management, node functions
+  memory/         # MemoryService (high-level write + read path orchestration)
+  agents/         # ReflectionAgent, BaseAgent, typed contracts
+  tools/          # ConcreteLLMClient, ModelRouter, EmbeddingService, PIIFilter
+  jobs/           # DecayJob, ReflectionJob (background)
+  evaluation/     # GoldenDataset, RetrievalMetrics, MemoryJudge, RegressionGate
+  api/            # REST routers: /health, /api/v1/memories, /api/v1/conversations
+  auth/           # User ID extraction (header-based, JWT planned)
+  prompts/        # Versioned prompt templates (extraction, evaluation, response)
+  main.py         # FastAPI entry point with lifespan management
+
+frontend/
+  src/app/        # Next.js 14 pages (dashboard, memories, conversations, health)
+  src/components/ # React components (ChatInterface, MemoryCard, MemoryEditor)
+  src/lib/        # API client and TypeScript types
+
+tests/            # 9-phase test suite covering foundation through concurrent workflows
+fixtures/         # Golden retrieval dataset (5 test cases)
+scripts/          # Database migrations (001-init.sql)
+docs/             # ADRs, future work documentation, screenshots
 ```
 
-## Key Design Decisions
+## Engineering Decisions
 
-See `docs/adr/` for full rationale:
+### ADR-001: PostgreSQL + pgvector over dedicated vector databases
 
-- **ADR-001:** Postgres + pgvector (not Pinecone) — single database, simpler ops
-- **ADR-002:** Modular monolith — 15 modules, inward-only dependencies
-- **ADR-003:** LangGraph now, Temporal later — abstract WorkflowEngine interface
-- **ADR-004:** OpenAI primary + Claude secondary — model router per task type
+A single PostgreSQL instance handles both structured queries (user isolation, type filtering, full-text search) and vector search (cosine similarity on embeddings). This eliminates the operational overhead of a second data store. Row-level security enforces user isolation at the database level. The `StorageBackend` abstract interface allows swapping to Pinecone or Weaviate if vector query volume exceeds single-node Postgres capacity.
 
-## Four Invariants
+### ADR-002: Modular monolith architecture
 
-1. User A's memory is never returned to user B (row-level security + query filters)
-2. Deleted memories are never retrieved (soft-delete + exclusion filter)
-3. Retrieval failure never blocks a response (fallback to memoryless response)
-4. Every memory carries provenance (source field + append-only audit log)
+15 modules with inward-only dependencies. No circular imports. Each module has a clear responsibility and communicates through typed interfaces. This avoids microservice overhead while maintaining clean boundaries that can be split later.
+
+### ADR-003: Sequential workflow engine (LangGraph deferred)
+
+The write and read paths are linear pipelines (extract -> evaluate -> store, retrieve -> rank -> compose -> respond). A sequential async engine is functionally equivalent to a graph engine for linear flows. The `WorkflowEngine` abstract interface allows swapping to LangGraph or Temporal when the pipeline becomes non-linear.
+
+### ADR-004: Model routing by task type
+
+Different tasks have different requirements. Extraction and evaluation use gpt-4o-mini (cheap, reliable structured output). Response generation uses gpt-4o (higher quality). Embedding uses text-embedding-3-small. All model assignments are overridable via environment variables.
+
+## Evaluation and Quality
+
+### Test Suite
+
+9 test phases covering progressive validation:
+
+| Phase | Focus | Coverage |
+|-------|-------|----------|
+| 1 | Foundation | Imports, dependency direction, abstract interfaces, models |
+| 2 | Frontend contract | Memory CRUD shapes, health endpoint format |
+| 3 | Backend CRUD | User isolation (Invariant 1), deleted exclusion (Invariant 2), audit logging |
+| 4 | Orchestration | Write + read paths, extraction -> evaluation -> store |
+| 5 | Retrieval quality | Hybrid retrieval, ranking formula, deduplication |
+| 6 | Advanced features | Decay job, reflection agent, PII filter, conversation endpoint |
+| 7 | Golden dataset | Regression gate with baseline precision/recall/latency |
+| 8 | Graph retrieval | 1-hop memory edges, related memories |
+| 9 | Concurrent workflows | Multi-user isolation, state management, error recovery |
+
+### Golden Dataset
+
+5 retrieval test cases in `fixtures/golden_retrieval.json` with expected contents and types. Used by the regression gate to prevent quality degradation across deployments.
+
+### Metrics
+
+- Precision, recall, F1 for retrieval quality
+- Mean reciprocal rank (MRR)
+- LLM-as-judge for extraction correctness (hallucination detection, missed facts)
+
+## Quick Start
+
+### With Docker (local development)
+
+```bash
+git clone https://github.com/vinodwaghmare/chat-memory-system.git
+cd chat-memory-system
+cp .env.example .env
+# Add your OPENAI_API_KEY to .env
+
+docker compose -f docker-compose.dev.yml up --build
+```
+
+The API will be available at `http://localhost:8001`. Interactive docs at `http://localhost:8001/docs`.
+
+### Without Docker
+
+```bash
+pip install -e ".[dev]"
+
+# Start PostgreSQL with pgvector and Redis separately, then:
+uvicorn backend.main:app --reload --port 8001
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Dashboard at `http://localhost:3000`.
+
+### Test the API
+
+```bash
+# Send a message
+curl -X POST http://localhost:8001/api/v1/conversations/message \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{"message": "I prefer Python and I build AI systems.", "conversation_id": "test-001"}'
+
+# List stored memories
+curl http://localhost:8001/api/v1/memories \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000"
+```
+
+## Roadmap
+
+### Implemented (Phases 0-9)
+
+- [x] Cognitive design: classification taxonomy, 10-question framework
+- [x] System architecture: module graph, ADRs, dependency hierarchy
+- [x] Backend API: CRUD endpoints, database repository
+- [x] LLM integration: extractor, evaluator, model router
+- [x] Memory architecture: pgvector store, hybrid retrieval, weighted ranking
+- [x] Workflow orchestration: sequential write/read paths
+- [x] Tooling: PII filter, user memory tools
+- [x] Multi-agent: reflection agent, decay job, typed contracts
+- [x] Evaluation: golden dataset, regression gate, LLM judge
+- [x] Frontend: Next.js dashboard, memory browser, chat interface
+- [x] Production deployment: Cloud Run, Cloud SQL, OpenRouter fallback
+
+### Planned (Phases 10-20)
+
+- [ ] Observability: Prometheus metrics, OpenTelemetry traces, Grafana dashboards
+- [ ] Security: JWT authentication, encryption at rest, Microsoft Presidio PII detection
+- [ ] Reliability: Circuit breakers, idempotency keys, dead letter queues
+- [ ] Infrastructure: Auto-scaling, multi-region deployment
+- [ ] Data engineering: ETL pipelines, data lake integration
+- [ ] Governance: Memory retention policies, compliance framework
+- [ ] CI/CD: Automated testing pipeline, deployment gates
+- [ ] HITL workflows: Human-in-the-loop memory correction
+- [ ] Continuous learning: Feedback loops, model fine-tuning
+
+Half-built hooks for Phases 10-12 are documented in [docs/FUTURE_WORK.md](docs/FUTURE_WORK.md).
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, coding standards, and pull request guidelines.
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
