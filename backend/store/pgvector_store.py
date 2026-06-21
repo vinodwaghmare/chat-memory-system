@@ -54,6 +54,7 @@ class PgVectorStore(StorageBackend):
         self._session.add(row)
         await self._session.flush()
         await self._session.refresh(row)
+        await self._session.commit()
         return str(row.id)
 
     async def get(self, memory_id: str, user_id: str) -> MemoryRecord | None:
