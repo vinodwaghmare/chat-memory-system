@@ -70,6 +70,21 @@ class HybridRetriever:
             except Exception as exc:
                 logger.warning("Graph retrieval failed: %s", exc)
 
+        # Fallback: if vector + keyword both returned empty, load recent memories
+        if not candidates:
+            try:
+                recent = await self._store.list_memories(user_id, limit=top_k)
+                for mem in recent:
+                    candidates[mem.id] = RawCandidate(
+                        memory=mem,
+                        semantic_score=0.3,
+                        source="fallback",
+                    )
+                if candidates:
+                    logger.info("Fallback retrieval: loaded %d recent memories", len(candidates))
+            except Exception as exc:
+                logger.warning("Fallback retrieval failed: %s", exc)
+
         return self._ranker.rank(list(candidates.values()), top_k)
 
     async def _vector_search(self, user_id: str, query: str, top_k: int) -> list[RawCandidate]:
