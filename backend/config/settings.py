@@ -65,6 +65,15 @@ class Settings(BaseSettings):
     api_key: str = "dev-api-key-change-in-production"
 
     # -------------------------------------------------------------------------
+    # JWT + Google OAuth
+    # -------------------------------------------------------------------------
+    jwt_secret_key: str = "CHANGE-ME-IN-PRODUCTION"
+    jwt_algorithm: str = "HS256"
+    jwt_access_token_expire_minutes: int = 30
+    jwt_refresh_token_expire_days: int = 7
+    google_client_id: str = ""
+
+    # -------------------------------------------------------------------------
     # Derived properties
     # -------------------------------------------------------------------------
     @property

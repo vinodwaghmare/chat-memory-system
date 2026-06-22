@@ -88,10 +88,12 @@ if cors_origins:
     )
 
 # --- Routers ---
+from backend.api.auth import router as auth_router  # noqa: E402
 from backend.api.conversations import router as conversations_router  # noqa: E402
 from backend.api.health import router as health_router  # noqa: E402
 from backend.api.memories import router as memories_router  # noqa: E402
 
+app.include_router(auth_router)
 app.include_router(health_router)
 app.include_router(memories_router)
 app.include_router(conversations_router)

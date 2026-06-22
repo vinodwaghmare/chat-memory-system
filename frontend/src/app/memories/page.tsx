@@ -23,7 +23,7 @@ export default function MemoriesPage() {
   useEffect(() => {
     setLoading(true);
     const type = filter === "all" ? undefined : filter;
-    fetchMemories(undefined, type)
+    fetchMemories(type)
       .then(setMemories)
       .catch(() => setMemories([]))
       .finally(() => setLoading(false));

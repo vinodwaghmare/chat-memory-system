@@ -1,18 +1,42 @@
 """Authentication dependencies for FastAPI.
 
-Phase 0-9: extract user_id from X-User-ID header (simple).
-Phase 10+: replace with JWT validation.
-This enforces Invariant 1 at the API boundary.
+JWT Bearer token validation via Google OAuth.
+Enforces Invariant 1 (user isolation) at the API boundary.
 """
 
 from __future__ import annotations
 
-from fastapi import Header, HTTPException
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError
+
+from backend.auth.jwt import decode_token
+
+security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user_id(
-    x_user_id: str = Header(default=""),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
 ) -> str:
-    if not x_user_id:
-        raise HTTPException(status_code=401, detail="X-User-ID header required")
-    return x_user_id
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    try:
+        payload = decode_token(credentials.credentials)
+        user_id: str | None = payload.get("sub")
+        token_type: str | None = payload.get("type")
+        if user_id is None or token_type != "access":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token",
+            )
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user_id
