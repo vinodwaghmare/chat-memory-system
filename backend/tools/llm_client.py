@@ -85,8 +85,11 @@ class ConcreteLLMClient(LLMClient):
                 is_quota = any(k in exc_str for k in ["insufficient_quota", "429", "quota", "rate_limit", "connection error"])
                 if is_quota and cfg.openrouter_api_key:
                     logger.warning("OpenAI quota exceeded, falling back to OpenRouter")
+                    fb_prompt = system_prompt
+                    if response_format and response_format.get("type") == "json_object":
+                        fb_prompt += "\n\nIMPORTANT: You MUST respond with valid JSON only. No markdown, no explanation, just JSON."
                     return await self._openrouter_fallback(
-                        cfg, messages, system_prompt, temperature, max_tokens,
+                        cfg, messages, fb_prompt, temperature, max_tokens,
                     )
                 if attempt < 2:
                     wait = 2 ** attempt
