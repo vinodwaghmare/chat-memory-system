@@ -2,7 +2,7 @@
 
 A persistent memory layer for conversational AI that learns, remembers, and retrieves user context across sessions.
 
-This system implements the memory architecture behind products like ChatGPT Memory. It classifies information into three cognitive types (semantic facts, procedural preferences, episodic experiences), evaluates what is worth storing, and retrieves relevant memories using hybrid search to personalize future responses. Deployed on Google Cloud, open source, and fully configurable.
+This system implements the memory architecture similiar like ChatGPT Memory. It classifies information into three cognitive types (semantic facts, procedural preferences, episodic experiences), evaluates what is worth storing, and retrieves relevant memories using hybrid search to personalize future responses. Deployed on Google Cloud, open source, and fully configurable.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB.svg)](https://python.org)
