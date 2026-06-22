@@ -21,7 +21,7 @@ This system implements the memory architecture similiar like ChatGPT Memory. It 
 
 ## Why This Exists
 
-Every conversation with an LLM starts from a blank slate. The model does not know your name, your preferences, what you discussed yesterday, or what tools you use. Users compensate by repeating themselves in every session.
+Every conversation with an LLM without the memory layer starts from a blank slate. The model does not know your name, your preferences, what you discussed yesterday, or what tools you use. Users compensate by repeating themselves in every session.
 
 Memory changes that. This system sits between the user and the LLM, maintaining a persistent layer of knowledge about each user. It captures three types of memory:
 
