@@ -128,7 +128,7 @@ export default function DashboardPage() {
       </div>
 
       {/* CTA Buttons */}
-      <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row gap-3">
         <Link
           href="/memories"
           className="bg-[#2a2a2a] border border-[#404040] rounded-xl px-6 py-3 text-sm font-medium text-[#e5e5e5] hover:bg-[#333] transition-colors flex items-center gap-2"

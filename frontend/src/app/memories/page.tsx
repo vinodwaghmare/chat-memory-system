@@ -32,7 +32,7 @@ export default function MemoriesPage() {
   return (
     <div className="max-w-5xl">
       {/* Header */}
-      <div className="flex items-end justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
           <Brain className="w-6 h-6 text-blue-400" />
           <h2 className="text-2xl font-bold text-white">

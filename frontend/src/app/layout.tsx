@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Link from "next/link";
 import { LayoutDashboard, Brain, MessageSquare, Activity } from "lucide-react";
+import MobileNav from "@/components/MobileNav";
 import "./globals.css";
 
 const inter = Inter({
@@ -13,6 +14,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Chat Memory System",
   description: "Memory dashboard for the ChatGPT-style memory system",
+  viewport: "width=device-width, initial-scale=1",
 };
 
 const NAV_ITEMS = [
@@ -30,10 +32,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className={`${inter.className} min-h-screen antialiased`}>
+        {/* Mobile nav */}
+        <MobileNav />
+
         <div className="flex">
-          {/* Sidebar */}
-          <nav className="w-60 min-h-screen bg-[#1f1f1f] flex flex-col border-r border-[#2e2e2e]">
-            {/* Brand */}
+          {/* Desktop sidebar - hidden on mobile */}
+          <nav className="hidden lg:flex w-60 min-h-screen bg-[#1f1f1f] flex-col border-r border-[#2e2e2e] sticky top-0 h-screen">
             <div className="px-5 py-6 mb-2">
               <div className="flex items-center gap-2.5">
                 <Brain className="w-5 h-5 text-blue-400" />
@@ -46,7 +50,6 @@ export default function RootLayout({
               </p>
             </div>
 
-            {/* Navigation */}
             <div className="flex flex-col gap-0.5 px-3 flex-1">
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
@@ -65,7 +68,9 @@ export default function RootLayout({
           </nav>
 
           {/* Main content */}
-          <main className="flex-1 p-8 overflow-auto">{children}</main>
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto min-h-screen">
+            {children}
+          </main>
         </div>
       </body>
     </html>
